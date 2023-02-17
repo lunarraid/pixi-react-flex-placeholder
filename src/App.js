@@ -1,7 +1,9 @@
 import { Component } from 'react';
 import { Stage, Container, Sprite, Text } from '@pixi/react';
 import { BlurFilter } from 'pixi.js';
-import { FlexSprite } from './layout';
+import { FlexSprite, FlexNineSlicePlane } from './layout';
+
+import ImageFrame from './assets/frame.png';
 
 const { min } = Math;
 
@@ -22,10 +24,6 @@ export default class App extends Component {
   };
 
   app = null;
-
-  onRef = (ref) => {
-    console.log(ref);
-  };
 
   onMount = (app) => {
     console.log('mount');
@@ -48,17 +46,27 @@ export default class App extends Component {
   render () {
     const { width, height, isVisible } = this.state;
 
+    const bunnyStyle = { texture: 'https://pixijs.io/pixi-react/img/bunny.png', margin: 16, height: 50 };
+
     return (
       <Stage
         onMount={ this.onMount }
         onUnmount={ this.onUnmount }
         options={ stageOptions }
-        height={ window.innerHeight }
-        width={ window.innerWidth }
+        height={ height }
+        width={ width }
       >
-        <FlexSprite style={{ width, height, tint: 0x333333, padding: 100 }} ref={ this.onRef }>
-          { isVisible ? <FlexSprite style={{ texture: 'https://pixijs.io/pixi-react/img/bunny.png' }} /> : null }
+        <FlexSprite style={{ width, height }} interactive click={ () => console.log('CLICK STAGE') }>
+          <FlexNineSlicePlane style={{ texture: ImageFrame, tint: 0x006600, flexDirection: 'row', padding: 32, flexWrap: 'wrap' }}>
+            <FlexNineSlicePlane style={{ texture: ImageFrame, flex: 1, tint: 0x990000, minWidth: 400, alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', padding: 32 }}>
+              { Array.from({ length: 20 }, (_, index) => <FlexSprite key={ index } style={ bunnyStyle } />) }
+            </FlexNineSlicePlane>
+            <FlexNineSlicePlane style={{ texture: ImageFrame, flex: 2, tint: 0x99aacc, minWidth: 300, alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', padding: 32 }}>
+              { Array.from({ length: 20 }, (_, index) => <FlexSprite interactive click={ (event) => event.stopPropagation() || console.log(index, event) } key={ index } style={ bunnyStyle } />) }
+            </FlexNineSlicePlane>
+          </FlexNineSlicePlane>
         </FlexSprite>
+
       </Stage>
     );
   }

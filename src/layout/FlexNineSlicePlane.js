@@ -1,10 +1,11 @@
-import { NineSlicePlane as PixiNineSlicePlane, Texture } from 'pixi.js';
-import Container from './Container';
+import { applyDefaultProps, PixiComponent } from '@pixi/react';
+import { NineSlicePlane, Texture } from 'pixi.js';
+import LayoutMixin from './LayoutMixin';
 
 // Temporary (imperfect) solution to spritesheet texture bug, remove when
 // this is dealt with: https://github.com/pixijs/pixi.js/issues/6451
 
-class NineSlicePlane extends PixiNineSlicePlane {
+class FlexNineSlicePlane extends LayoutMixin(NineSlicePlane) {
 
   updateHorizontalVertices () {
     const vertices = this.vertices;
@@ -30,20 +31,22 @@ class NineSlicePlane extends PixiNineSlicePlane {
     const vertices = this.vertices;
     const scale = this._getMinScale();
     const trim = this.texture && this.texture.trim;
-    const orig = this.texture && this.texture.orig;
 
     let leftPadding = 0;
-    let rightPadding = 0;
 
     if (trim) {
       leftPadding = trim.x;
-      rightPadding = orig.width - trim.width - trim.x;
     }
 
     vertices[0] = vertices[8] = vertices[16] = vertices[24] = leftPadding * scale;
     vertices[2] = vertices[10] = vertices[18] = vertices[26] = this._leftWidth * scale;
     vertices[4] = vertices[12] = vertices[20] = vertices[28] = this._width - (this._rightWidth * scale);
     vertices[6] = vertices[14] = vertices[22] = vertices[30] = this._width - leftPadding;
+  }
+
+  _onLayout (x, y, width, height) {
+    this.height = height;
+    this.width = width;
   }
 
   _refresh () {
@@ -96,63 +99,61 @@ class NineSlicePlane extends PixiNineSlicePlane {
 
 }
 
-export default class NineSliceSprite extends Container {
+function updateTexture (instance) {
+  const { width, height } = instance.texture;
 
-  _textureRef = null;
+  const {
+    bottomHeight = height * 0.5,
+    rightWidth = width * 0.5,
+    topHeight = height * 0.5,
+    leftWidth = width * 0.5
+  } = instance.style;
 
-  createDisplayObject () {
-    return new NineSlicePlane(Texture.EMPTY);
+  const needsUpdate = instance.topHeight !== topHeight
+    || instance.bottomHeight !== bottomHeight
+    || instance.leftWidth !== leftWidth
+    || instance.rightWidth !== rightWidth;
+
+  if (needsUpdate) {
+    instance.setBorders(topHeight, rightWidth, bottomHeight, leftWidth);
   }
 
-  applyProps (oldProps, newProps) {
-    super.applyProps(oldProps, newProps);
+  return needsUpdate;
+}
 
-    let texture;
+export default PixiComponent('FlexNineSlicePlane', {
 
-    const textureRef = newProps.texture || this.style.texture || null;
+  create: (props) => {
+    return new FlexNineSlicePlane(Texture.EMPTY);
+  },
 
-    if (this._textureRef !== textureRef) {
+  applyProps: (instance, oldProps, newProps) => {
+    const previousTextureRef = oldProps.texture || instance.style.texture || null;
+    let changed = applyDefaultProps(instance, oldProps, newProps);
+    const textureRef = newProps.texture || instance.style.texture || null;
 
-      this._textureRef = textureRef;
+    let { texture } = instance;
+
+    if (previousTextureRef !== textureRef) {
 
       if (textureRef) {
-        texture = (typeof textureRef === 'string' || textureRef instanceof String)
-          ? Texture.from(textureRef)
-          : textureRef;
+        texture = (typeof textureRef === 'string' || textureRef instanceof String) ? Texture.from(textureRef) : textureRef;
       } else {
-        texture = Texture.NONE;
+        texture = Texture.WHITE;
       }
 
-      this.displayObject.texture = texture;
+      instance.texture = texture;
+      changed = true;
+    }
+
+    if (texture.baseTexture.valid) {
+      const updated = updateTexture(instance);
+      changed = changed || updated;
     } else {
-      texture = this.displayObject.texture;
+      texture.once('update', () => updateTexture(instance));
     }
 
-    const height = texture ? texture.height : 0;
-    const width = texture ? texture.width : 0;
-
-    const {
-      bottomHeight = height * 0.5,
-      rightWidth = width * 0.5,
-      topHeight = height * 0.5,
-      leftWidth = width * 0.5
-    } = this.style;
-
-    const dO = this.displayObject;
-    const needsUpdate = dO.topHeight !== topHeight || dO.bottomHeight !== bottomHeight || dO.leftWidth !== leftWidth || dO.rightWidth !== rightWidth;
-
-    if (needsUpdate) {
-      this.displayObject.setBorders(topHeight, rightWidth, bottomHeight, leftWidth);
-    }
+    return changed;
   }
 
-  onLayout (x, y, width, height) {
-    super.onLayout(x, y, width, height);
-
-    if (this.displayObject.texture) {
-      this.displayObject.width = width;
-      this.displayObject.height = height;
-    }
-  }
-
-}
+});

@@ -182,8 +182,6 @@ class FlexSprite extends LayoutMixin(Sprite) {
     if (this.children.length === 0) {
       this.layoutNode?.markDirty();
     }
-
-    this.layoutDirty = true;
   }
 
   measure (node, width, widthMode, height, heightMode) {
@@ -259,7 +257,7 @@ export default PixiComponent('FlexSprite', {
   applyProps: (instance, oldProps, newProps) => {
     const previousTextureRef = oldProps.texture || instance.style.texture || null;
 
-    applyDefaultProps(instance, oldProps, newProps);
+    let changed = applyDefaultProps(instance, oldProps, newProps);
 
     const textureRef = newProps.texture || instance.style.texture || null;
 
@@ -274,7 +272,10 @@ export default PixiComponent('FlexSprite', {
       }
 
       instance.texture = texture;
+      changed = true;
     }
+
+    return changed;
   }
 
 });

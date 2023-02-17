@@ -22,8 +22,6 @@ export default function LayoutMixin (BaseClass) {
       this.offsetY = 0;
 
       this.layoutNode = Node.create(nodeConfig);
-      this._layoutDirty = true;
-      this._needsGraphUpdate = false;
       this.onLayout = null;
 
       this.layoutCallbackViews = [];
@@ -70,9 +68,6 @@ export default function LayoutMixin (BaseClass) {
         cached.y = newLayout.top;
         cached.width = newLayout.width;
         cached.height = newLayout.height;
-      }
-
-      if (this._layoutDirty || boundsDirty) {
 
         const anchorOffsetX = this.anchorX * cached.width;
         const anchorOffsetY = this.anchorY * cached.height;
@@ -89,8 +84,6 @@ export default function LayoutMixin (BaseClass) {
         if (boundsDirty && this.onLayout) {
           this._getLayoutRoot().addToCallbackPool(this);
         }
-
-        this.layoutDirty = false;
       }
 
       const childCount = this.children.length;
@@ -101,10 +94,9 @@ export default function LayoutMixin (BaseClass) {
       }
     }
 
+    _renderCount = 0;
+
     render (renderer) {
-      if (this._needsGraphUpdate) {
-        this.updateLayoutGraph();
-      }
 
       if (!this.sortableChildren) {
         return super.render(renderer);
@@ -121,37 +113,39 @@ export default function LayoutMixin (BaseClass) {
       this.children = children;
     }
 
-    measure (node, width, widthMode, height, heightMode) {
+    updateTransform () {
+      if (this.layoutNode.isDirty()) {
+        const root = this._getLayoutRoot();
+        if (root === this) {
+          this.updateLayoutGraph();
+        }
+      }
+
+      super.updateTransform();
     }
 
     updateLayoutGraph () {
+      this.layoutAttemptCount++;
+      this.layoutNode.calculateLayout();
+      this.applyLayout();
 
-      this._needsGraphUpdate = false;
+      for (let i = 0; i < this.callbackCount; i++) {
+        const view = this.layoutCallbackViews[i];
 
-      if (this._layoutDirty) {
-
-        this.layoutAttemptCount++;
-        this.layoutNode.calculateLayout();
-        this.applyLayout();
-
-        for (let i = 0; i < this.callbackCount; i++) {
-          const view = this.layoutCallbackViews[i];
-
-          if (view) {
-            const { x, y, width, height } = view.cachedLayout;
-            this.layoutCallbackViews[i].onLayout(x, y, width, height);
-            this.layoutCallbackViews[i] = null;
-          }
+        if (view) {
+          const { x, y, width, height } = view.cachedLayout;
+          this.layoutCallbackViews[i].onLayout(x, y, width, height);
+          this.layoutCallbackViews[i] = null;
         }
-
-        this.callbackCount = 0;
-
-        if (this._layoutDirty && this.layoutAttemptCount <= MAX_LAYOUT_ATTEMPTS) {
-          this.updateLayout();
-        }
-
-        this.layoutAttemptCount--;
       }
+
+      this.callbackCount = 0;
+
+      if (this.layoutNode.isDirty() && this.layoutAttemptCount <= MAX_LAYOUT_ATTEMPTS) {
+        this.updateLayoutGraph();
+      }
+
+      this.layoutAttemptCount--;
     }
 
     _onLayout (x, y, width, height) {
@@ -164,7 +158,7 @@ export default function LayoutMixin (BaseClass) {
       const childCount = this.children.length;
       const layoutChildCount = n.getChildCount();
 
-      this.updateMeasureFunction(childCount > 0);
+      childCount > 0 && this.updateMeasureFunction(true);
 
       let childIndex = -1;
 
@@ -191,10 +185,16 @@ export default function LayoutMixin (BaseClass) {
         n.insertChild(childNode, childIndex);
       }
 
-      while (childIndex < layoutChildCount) {
-        const node = n.getChild(childIndex++);
+      childIndex++;
+
+      const amountToDrop = layoutChildCount - childIndex;
+
+      for (let i = 0; i < amountToDrop; i++) {
+        const node = n.getChild(childIndex);
         node.getParent().removeChild(node);
       }
+
+      childCount === 0 && this.updateMeasureFunction(false);
 
       if (this._sortedChildren) {
         this._sortedChildren = this.children.slice();
@@ -215,7 +215,7 @@ export default function LayoutMixin (BaseClass) {
       if (this._isMeasureFunctionSet && hasChildren) {
         this._isMeasureFunctionSet = false;
         this.layoutNode.setMeasureFunc(null);
-      } else if (!this._isMeasureFunctionSet && !hasChildren) {
+      } else if (!this._isMeasureFunctionSet && !hasChildren && this.measure) {
         this._isMeasureFunctionSet = true;
         this.layoutNode.setMeasureFunc(
           (node, width, widthMode, height, heightMode) =>
@@ -229,35 +229,10 @@ export default function LayoutMixin (BaseClass) {
         this._getLayoutRoot().removeFromCallbackPool(this);
       }
 
+      super.destroy(options);
+
       this.layoutNode.free();
       this.layoutNode = null;
-
-      super.destroy(options);
-    }
-
-    get layoutDirty () {
-      return this._layoutDirty;
-    }
-
-    set layoutDirty (value) {
-
-      if (value === this._layoutDirty) {
-        return;
-      }
-
-      this._layoutDirty = value;
-
-      if (!value || !this.parent) {
-        return;
-      }
-
-      const root = this._getLayoutRoot();
-
-      if (root === this) {
-        this._needsGraphUpdate = true;
-      } else {
-        root.layoutDirty = true;
-      }
     }
 
     get style () {
@@ -271,7 +246,7 @@ export default function LayoutMixin (BaseClass) {
 
       const oldStyle = this._style || NO_STYLE;
       this._style = value ? mergeStyles(value) : NO_STYLE;
-      this.layoutDirty = applyLayoutProperties(this.layoutNode, oldStyle, value);
+      applyLayoutProperties(this.layoutNode, oldStyle, value);
 
       const {
         blendMode = this.blendMode,
