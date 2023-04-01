@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { Stage, Container, Sprite, Text, Graphics } from '@pixi/react';
+import { Stage } from '@pixi/react';
 import { FlexSprite, FlexNineSlicePlane, FlexTilingSprite } from './layout';
 
 import ImageFrame from './assets/frame.png';
