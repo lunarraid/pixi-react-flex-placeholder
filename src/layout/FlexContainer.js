@@ -1,6 +1,7 @@
 import { PixiComponent } from '@pixi/react';
 import { Container, Point } from 'pixi.js';
 import LayoutMixin from './LayoutMixin';
+import { applyDefaultStyleProps } from './PropsUtils';
 
 const SCRATCH_POINT = new Point();
 
@@ -56,6 +57,8 @@ export default PixiComponent('FlexContainer', {
 
   create: (props) => {
     return new FlexContainer();
-  }
+  },
+
+  applyProps: applyDefaultStyleProps
 
 });

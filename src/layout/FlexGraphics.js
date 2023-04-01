@@ -1,6 +1,7 @@
-import { applyDefaultProps, PixiComponent } from '@pixi/react';
+import { PixiComponent } from '@pixi/react';
 import { Graphics } from 'pixi.js';
 import LayoutMixin from './LayoutMixin';
+import { applyDefaultStyleProps } from './PropsUtils';
 
 const FlexGraphics = LayoutMixin(Graphics);
 
@@ -10,8 +11,6 @@ export default PixiComponent('FlexGraphics', {
     return new FlexGraphics();
   },
 
-  applyProps: (instance, oldProps, newProps) => {
-    applyDefaultProps(instance, oldProps, newProps);
-  }
+  applyProps: applyDefaultStyleProps
 
 });

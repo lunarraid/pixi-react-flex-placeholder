@@ -1,13 +1,10 @@
 import { Component } from 'react';
-import { Stage, Container, Sprite, Text } from '@pixi/react';
-import { BlurFilter } from 'pixi.js';
-import { FlexSprite, FlexNineSlicePlane } from './layout';
+import { Stage, Container, Sprite, Text, Graphics } from '@pixi/react';
+import { FlexSprite, FlexNineSlicePlane, FlexTilingSprite } from './layout';
 
 import ImageFrame from './assets/frame.png';
 
 const { min } = Math;
-
-const blur = [ new BlurFilter(4) ];
 
 const stageOptions = {
   autoDensity: true,
@@ -19,22 +16,17 @@ export default class App extends Component {
 
   state = {
     width: window.innerWidth,
-    height: window.innerHeight,
-    isVisible: true
+    height: window.innerHeight
   };
 
   app = null;
 
   onMount = (app) => {
-    console.log('mount');
     this.app = app;
     app.renderer.on('resize', this.onResize, this);
-    // console.log(app.stage);
-    // setTimeout(() => this.setState({ isVisible: false }), 2000);
   };
 
   onUnmount = () => {
-    console.log('unmount');
     this.app.renderer.removeListener('resize', this.onResize, this);
     this.app = null;
   };
@@ -44,9 +36,9 @@ export default class App extends Component {
   };
 
   render () {
-    const { width, height, isVisible } = this.state;
+    const { width, height } = this.state;
 
-    const bunnyStyle = { texture: 'https://pixijs.io/pixi-react/img/bunny.png', margin: 16, height: 50 };
+    const bunnyStyle = { image: 'https://pixijs.io/pixi-react/img/bunny.png', margin: 16, height: 50 };
 
     return (
       <Stage
@@ -56,16 +48,16 @@ export default class App extends Component {
         height={ height }
         width={ width }
       >
-        <FlexSprite style={{ width, height }} interactive click={ () => console.log('CLICK STAGE') }>
-          <FlexNineSlicePlane style={{ texture: ImageFrame, tint: 0x006600, flexDirection: 'row', padding: 32, flexWrap: 'wrap' }}>
-            <FlexNineSlicePlane style={{ texture: ImageFrame, flex: 1, tint: 0x990000, minWidth: 400, alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', padding: 32 }}>
+        <FlexTilingSprite style={{ image: 'https://pixijs.io/pixi-react/img/bunny.png', width, height, padding: 100 }} interactive click={ () => console.log('CLICK STAGE') }>
+          <FlexNineSlicePlane style={{ image: ImageFrame, tint: 0x006600, flexDirection: 'row', padding: 32, flexWrap: 'wrap' }}>
+            <FlexNineSlicePlane style={{ image: ImageFrame, flex: 1, tint: 0x990000, minWidth: 400, alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', padding: 32 }}>
               { Array.from({ length: 20 }, (_, index) => <FlexSprite key={ index } style={ bunnyStyle } />) }
             </FlexNineSlicePlane>
-            <FlexNineSlicePlane style={{ texture: ImageFrame, flex: 2, tint: 0x99aacc, minWidth: 300, alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', padding: 32 }}>
+            <FlexNineSlicePlane style={{ image: ImageFrame, flex: 2, tint: 0x99aacc, minWidth: 300, alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', padding: 32 }}>
               { Array.from({ length: 20 }, (_, index) => <FlexSprite interactive click={ (event) => event.stopPropagation() || console.log(index, event) } key={ index } style={ bunnyStyle } />) }
             </FlexNineSlicePlane>
           </FlexNineSlicePlane>
-        </FlexSprite>
+        </FlexTilingSprite>
 
       </Stage>
     );

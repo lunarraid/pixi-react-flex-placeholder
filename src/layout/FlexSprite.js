@@ -1,7 +1,9 @@
-import { applyDefaultProps, PixiComponent } from '@pixi/react';
-import { Point, Rectangle, settings, Sprite, Texture } from 'pixi.js';
+import { PixiComponent } from '@pixi/react';
+import { Point, Rectangle, settings, Texture } from '@pixi/core';
+import { Sprite } from '@pixi/sprite';
 import { MEASURE_MODE_EXACTLY, MEASURE_MODE_AT_MOST } from 'typeflex';
 import LayoutMixin from './LayoutMixin';
+import { applyDefaultTextureProps } from './PropsUtils';
 
 const SCRATCH_POINT = new Point();
 
@@ -76,14 +78,12 @@ class FlexSprite extends LayoutMixin(Sprite) {
     vertexData[6] = (a * w1) + (c * h0) + tx;
     vertexData[7] = (d * h0) + (b * w1) + ty;
 
-    if (this._roundPixels)
-    {
-        const resolution = settings.RESOLUTION;
+    if (this._roundPixels) {
+      const resolution = settings.RESOLUTION;
 
-        for (let i = 0; i < vertexData.length; ++i)
-        {
-            vertexData[i] = round((vertexData[i] * resolution | 0) / resolution);
-        }
+      for (let i = 0, len = vertexData.length; i < len; ++i) {
+        vertexData[i] = round((vertexData[i] * resolution | 0) / resolution);
+      }
     }
   }
 
@@ -250,32 +250,10 @@ class FlexSprite extends LayoutMixin(Sprite) {
 
 export default PixiComponent('FlexSprite', {
 
-  create: (props) => {
+  create (props, root) {
     return new FlexSprite();
   },
 
-  applyProps: (instance, oldProps, newProps) => {
-    const previousTextureRef = oldProps.texture || instance.style.texture || null;
-
-    let changed = applyDefaultProps(instance, oldProps, newProps);
-
-    const textureRef = newProps.texture || instance.style.texture || null;
-
-    if (previousTextureRef !== textureRef) {
-
-      let texture;
-
-      if (textureRef) {
-        texture = (typeof textureRef === 'string' || textureRef instanceof String) ? Texture.from(textureRef) : textureRef;
-      } else {
-        texture = Texture.WHITE;
-      }
-
-      instance.texture = texture;
-      changed = true;
-    }
-
-    return changed;
-  }
+  applyProps: applyDefaultTextureProps
 
 });

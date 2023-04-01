@@ -249,8 +249,12 @@ export default function LayoutMixin (BaseClass) {
       applyLayoutProperties(this.layoutNode, oldStyle, value);
 
       const {
+        scaleX = this.scale.x,
+        scaleY = this.scale.y,
         blendMode = this.blendMode,
         filters = this.filters,
+        offsetX = 0,
+        offsetY = 0,
         rotation = this.rotation,
         visible = this.visible,
         tint = this.tint,
@@ -259,10 +263,13 @@ export default function LayoutMixin (BaseClass) {
 
       this.blendMode = blendMode;
       this.filters = filters;
+      this.offsetX = offsetX;
+      this.offsetY = offsetY;
       this.rotation = rotation;
       this.visible = visible;
       this.tint = tint;
       this.zIndex = zIndex;
+      this.scale.set(scaleX, scaleY);
     }
 
   };

@@ -1,0 +1,56 @@
+{
+    "extends": [ "react-app", "react-app/jest", "plugin:json/recommended" ],
+    "root": true,
+    "rules": {
+        "array-bracket-spacing": [ "error", "always", { "arraysInArrays": false } ],
+        "arrow-parens": "warn",
+        "semi": [ "error", "always" ],
+        "curly": "error",
+        "eqeqeq": "error",
+        "eol-last": "warn" ,
+        "indent": ["error", 2, { "SwitchCase": 1, "flatTernaryExpressions": true }],
+        "keyword-spacing": "warn",
+        "dot-location": ["error", "property"],
+        "new-cap": "off",
+        "no-case-declarations": "off",
+        "no-empty": "warn",
+        "no-extra-semi": "error",
+        "no-prototype-builtins": "off",
+        "no-unused-vars": [ "warn", { "vars": "all", "args": "none", "ignoreRestSiblings": true } ],
+        "no-use-before-define": "off",
+        "no-var": "warn",
+        "prefer-const": "warn",
+        "prefer-destructuring": "off",
+        "prefer-spread": "warn",
+        "prefer-template": "off",
+        "space-in-parens": "error",
+        "template-curly-spacing": ["warn", "always"],
+        "react/jsx-indent": [ "error", 2 ],
+        "react/jsx-uses-react": "error",
+        "react/jsx-uses-vars": "error",
+        "react/jsx-curly-spacing": ["warn", {"when": "always", "spacing": {
+            "objectLiterals": "never"
+        }}],
+        "comma-dangle": ["error", "never"],
+        "import/no-webpack-loader-syntax": "off"
+    },
+    "parserOptions": {
+        "ecmaVersion": 9,
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "jsx": true
+        }
+    },
+    "env": {
+        "browser": true,
+        "node": true,
+        "es6": true, 
+        "es2017": true,
+        "jest/globals": true
+    },
+    "parser": "@babel/eslint-parser",
+    "ignorePatterns": [ "**/__tests__/*.js", "scripts" ],
+    "globals": {
+        "__DEV__": true
+    }
+}

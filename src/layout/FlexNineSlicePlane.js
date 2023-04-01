@@ -1,6 +1,7 @@
-import { applyDefaultProps, PixiComponent } from '@pixi/react';
+import { PixiComponent } from '@pixi/react';
 import { NineSlicePlane, Texture } from 'pixi.js';
 import LayoutMixin from './LayoutMixin';
+import { applyDefaultTextureProps } from './PropsUtils';
 
 // Temporary (imperfect) solution to spritesheet texture bug, remove when
 // this is dealt with: https://github.com/pixijs/pixi.js/issues/6451
@@ -128,32 +129,7 @@ export default PixiComponent('FlexNineSlicePlane', {
   },
 
   applyProps: (instance, oldProps, newProps) => {
-    const previousTextureRef = oldProps.texture || instance.style.texture || null;
-    let changed = applyDefaultProps(instance, oldProps, newProps);
-    const textureRef = newProps.texture || instance.style.texture || null;
-
-    let { texture } = instance;
-
-    if (previousTextureRef !== textureRef) {
-
-      if (textureRef) {
-        texture = (typeof textureRef === 'string' || textureRef instanceof String) ? Texture.from(textureRef) : textureRef;
-      } else {
-        texture = Texture.WHITE;
-      }
-
-      instance.texture = texture;
-      changed = true;
-    }
-
-    if (texture.baseTexture.valid) {
-      const updated = updateTexture(instance);
-      changed = changed || updated;
-    } else {
-      texture.once('update', () => updateTexture(instance));
-    }
-
-    return changed;
+    return applyDefaultTextureProps(instance, oldProps, newProps, () => updateTexture(instance));
   }
 
 });
